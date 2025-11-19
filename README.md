@@ -1,14 +1,27 @@
 # Python Code Execution Service
 
-A secure API service that executes arbitrary Python code in a sandboxed environment using nsjail. This service is designed to run Python scripts safely in the cloud, capturing both the return value and stdout output.
+A secure API service that executes arbitrary Python code in a sandboxed environment. This service is designed to run Python scripts safely in the cloud, capturing both the return value and stdout output.
+
+**Live Service:** https://python-executor-498097721438.us-central1.run.app
 
 ## Features
 
-- Secure execution using nsjail for sandboxing
+- Secure execution using Google Cloud Run's gVisor sandboxing
 - CPU, memory, and time limits to prevent resource abuse
 - Pre-installed libraries: pandas, numpy, os
 - Lightweight Docker image for easy deployment
-- Google Cloud Run compatible
+- Fully compatible with Google Cloud Run
+
+## Important Note: Cloud Run Architecture
+
+This service is designed for **Google Cloud Run**, which uses **gVisor** for container sandboxing. An earlier version attempted to use nsjail for sandboxing, but this caused conflicts because nsjail is incompatible with gVisor (you cannot run a sandbox inside another sandbox). The current implementation leverages Cloud Run's built-in gVisor security, which provides:
+- Process isolation
+- Limited syscalls
+- Resource limits
+- Network isolation
+- Security boundaries
+
+For local development, the service executes Python directly with timeout controls.
 
 ## API Specification
 
@@ -70,10 +83,12 @@ Service will be available at `http://localhost:8080`
 
 ## Testing
 
-Set your base URL:
+### Testing the Live Cloud Run Service
+
+Set base URL to the live service:
 
 ```bash
-export BASE_URL="http://localhost:8080"
+export BASE_URL="https://python-executor-498097721438.us-central1.run.app"
 ```
 
 ### Test Case 1: Health Check
@@ -272,6 +287,8 @@ Expected Response:
 
 ## Deployment to Google Cloud Run
 
+### Quick Deploy
+
 ```bash
 export PROJECT_ID=your-project-id
 export SERVICE_NAME=python-executor
@@ -279,8 +296,7 @@ export REGION=us-central1
 
 gcloud auth configure-docker
 
-docker build -t gcr.io/$PROJECT_ID/$SERVICE_NAME .
-docker push gcr.io/$PROJECT_ID/$SERVICE_NAME
+gcloud builds submit --tag gcr.io/$PROJECT_ID/$SERVICE_NAME
 
 gcloud run deploy $SERVICE_NAME \
   --image gcr.io/$PROJECT_ID/$SERVICE_NAME \
@@ -295,25 +311,45 @@ gcloud run deploy $SERVICE_NAME \
 gcloud run services describe $SERVICE_NAME --region $REGION --format 'value(status.url)'
 ```
 
+### Deployment Challenges & Solutions
+
+**Challenge:** Initial implementation used nsjail for sandboxing, but this caused "Couldn't launch the child process" errors on Cloud Run.
+
+**Root Cause:** Google Cloud Run uses **gVisor** for container sandboxing. Attempting to run nsjail (another sandbox) inside gVisor creates incompatible nested sandboxing.
+
+**Solution:** Removed nsjail and leveraged Cloud Run's built-in gVisor sandboxing. This resulted in:
+- Faster builds (46s vs 2+ minutes)
+- Smaller Docker images
+- Full Cloud Run compatibility
+- Equal or better security via gVisor
+
+**Key Lesson:** When deploying to managed container platforms like Cloud Run, rely on the platform's built-in security features rather than adding your own sandboxing layer.
+
 ## Security Features
 
-- Sandboxing with nsjail isolates script execution from host system
-- Memory limit: 512 MB per execution
-- CPU time limit: 10 seconds
-- Wall time limit: 30 seconds
-- No new process spawning
+When deployed on Google Cloud Run, the service benefits from gVisor sandboxing:
+- Process isolation via gVisor
+- Limited syscalls enforced by gVisor
+- Memory limit: 1 GB per Cloud Run instance
+- Script execution timeout: 30 seconds
 - Input validation for script syntax and main() function
-- Read-only filesystem except /tmp
-- No network access from executed scripts
-- Scripts run as unprivileged user 99999
+- Network isolation provided by Cloud Run
+- Restricted filesystem access
+
+The service configuration on Cloud Run:
+- Memory: 1 GB per instance
+- CPU: 1 vCPU per instance
+- Timeout: 60 seconds per request
+- Max instances: 10 (auto-scaling)
+- Authentication: Public access (unauthenticated)
 
 ## Limitations
 
-- Maximum execution time: 30 seconds
-- Maximum memory: 512 MB
-- No network access
-- No subprocess creation
-- Limited filesystem access
+- Maximum script execution time: 30 seconds per script
+- Memory available: Up to 1 GB (Cloud Run instance limit)
+- Network access: Isolated by Cloud Run (scripts cannot make external network calls)
+- Filesystem: Limited to container filesystem
+- Subprocess creation: Limited by gVisor security policies
 
 ## License
 

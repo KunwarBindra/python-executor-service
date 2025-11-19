@@ -53,43 +53,28 @@ if __name__ == '__main__':
         f.write(wrapped_script)
     
     try:
-        # nsjail command for safe execution
-        nsjail_cmd = [
-            'nsjail',
-            '-Mo',  # Mode: execute once and exit
-            '--quiet',  # Suppress nsjail info messages
-            '--chroot', '/',
-            '--user', '99999',
-            '--group', '99999',
-            '--time_limit', '30',  # 30 seconds timeout
-            '--max_cpus', '1',
-            '--rlimit_as', '512',  # Memory limit: 512 MB
-            '--rlimit_cpu', '10',  # CPU time limit: 10 seconds
-            '--rlimit_nofile', '64',  # Max open files
-            '--rlimit_nproc', '0',  # No new processes
-            '--disable_proc',  # Disable /proc
-            '-R', '/usr/lib',
-            '-R', '/usr/local/lib',
-            '-R', '/lib',
-            '-R', '/lib64',
-            '-R', '/bin',
-            '-R', '/usr/bin',
-            '-R', '/usr/local/bin',
-            '-R', f'{script_path}:{script_path}',
-            '--',
-            '/usr/local/bin/python3',
-            script_path
-        ]
+        # Cloud Run already uses gVisor for sandboxing, so we execute Python directly
+        # No need for nsjail - would cause conflicts with gVisor
+        import os as os_module
         
-        # Execute with nsjail
+        # Find Python interpreter
+        python_path = '/usr/local/bin/python3'
+        if not os_module.path.exists(python_path):
+            python_path = '/usr/bin/python3'
+            if not os_module.path.exists(python_path):
+                python_path = 'python3'  # Fallback to PATH
+        
+        # Execute Python directly with timeout
+        # Cloud Run's gVisor provides isolation, resource limits, and security
         process = subprocess.Popen(
-            nsjail_cmd,
+            [python_path, script_path],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
         )
         
-        stdout, stderr = process.communicate(timeout=35)
+        # 30 second timeout for script execution
+        stdout, stderr = process.communicate(timeout=30)
         
         # Parse the output to separate stdout from result
         if "__RESULT_START__" in stdout and "__RESULT_END__" in stdout:

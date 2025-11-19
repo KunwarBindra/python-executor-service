@@ -1,0 +1,13 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '--no-cache'
+      - '--platform=linux/amd64'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/python-executor:latest'
+      - '.'
+images:
+  - 'gcr.io/$PROJECT_ID/python-executor:latest'
+timeout: '1200s'
+
