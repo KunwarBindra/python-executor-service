@@ -83,18 +83,12 @@ Service will be available at `http://localhost:8080`
 
 ## Testing
 
-### Testing the Live Cloud Run Service
-
-Set base URL to the live service:
-
-```bash
-export BASE_URL="https://python-executor-498097721438.us-central1.run.app"
-```
+All test commands below use the live Cloud Run service URL directly.
 
 ### Test Case 1: Health Check
 
 ```bash
-curl -s $BASE_URL/health | python3 -m json.tool
+curl -s https://python-executor-498097721438.us-central1.run.app/health | python3 -m json.tool
 ```
 
 Expected Response:
@@ -107,7 +101,7 @@ Expected Response:
 ### Test Case 2: Basic Return Value
 
 ```bash
-curl -s -X POST $BASE_URL/execute \
+curl -s -X POST https://python-executor-498097721438.us-central1.run.app/execute \
   -H "Content-Type: application/json" \
   -d '{
     "script": "def main():\n    return {\"message\": \"Hello, World!\", \"value\": 42}"
@@ -128,7 +122,7 @@ Expected Response:
 ### Test Case 3: With Print Statements
 
 ```bash
-curl -s -X POST $BASE_URL/execute \
+curl -s -X POST https://python-executor-498097721438.us-central1.run.app/execute \
   -H "Content-Type: application/json" \
   -d '{
     "script": "def main():\n    print(\"Starting calculation...\")\n    result = 10 * 5\n    print(f\"Result is {result}\")\n    return {\"answer\": result}"
@@ -148,7 +142,7 @@ Expected Response:
 ### Test Case 4: Using NumPy
 
 ```bash
-curl -s -X POST $BASE_URL/execute \
+curl -s -X POST https://python-executor-498097721438.us-central1.run.app/execute \
   -H "Content-Type: application/json" \
   -d '{
     "script": "import numpy as np\n\ndef main():\n    arr = np.array([1, 2, 3, 4, 5])\n    return {\n        \"sum\": int(np.sum(arr)),\n        \"mean\": float(np.mean(arr)),\n        \"max\": int(np.max(arr))\n    }"
@@ -170,7 +164,7 @@ Expected Response:
 ### Test Case 5: Using Pandas
 
 ```bash
-curl -s -X POST $BASE_URL/execute \
+curl -s -X POST https://python-executor-498097721438.us-central1.run.app/execute \
   -H "Content-Type: application/json" \
   -d '{
     "script": "import pandas as pd\n\ndef main():\n    df = pd.DataFrame({\n        \"name\": [\"Alice\", \"Bob\", \"Charlie\"],\n        \"age\": [25, 30, 35]\n    })\n    return {\n        \"rows\": len(df),\n        \"columns\": list(df.columns),\n        \"mean_age\": float(df[\"age\"].mean())\n    }"
@@ -192,7 +186,7 @@ Expected Response:
 ### Test Case 6: Using Pandas and NumPy Together
 
 ```bash
-curl -s -X POST $BASE_URL/execute \
+curl -s -X POST https://python-executor-498097721438.us-central1.run.app/execute \
   -H "Content-Type: application/json" \
   -d '{
     "script": "import pandas as pd\nimport numpy as np\n\ndef main():\n    print(\"Creating dataset...\")\n    data = pd.DataFrame({\n        \"x\": np.arange(1, 11),\n        \"y\": np.arange(1, 11) ** 2\n    })\n    print(f\"Dataset has {len(data)} rows\")\n    \n    return {\n        \"x_sum\": int(data[\"x\"].sum()),\n        \"y_sum\": int(data[\"y\"].sum()),\n        \"correlation\": float(data[\"x\"].corr(data[\"y\"]))\n    }"
@@ -214,7 +208,7 @@ Expected Response:
 ### Test Case 7: Complex Calculation
 
 ```bash
-curl -s -X POST $BASE_URL/execute \
+curl -s -X POST https://python-executor-498097721438.us-central1.run.app/execute \
   -H "Content-Type: application/json" \
   -d '{
     "script": "import math\n\ndef main():\n    print(\"Calculating fibonacci...\")\n    def fib(n):\n        if n <= 1:\n            return n\n        return fib(n-1) + fib(n-2)\n    \n    result = fib(10)\n    print(f\"Fibonacci(10) = {result}\")\n    return {\"fibonacci_10\": result}"
@@ -234,7 +228,7 @@ Expected Response:
 ### Test Case 8: Missing main() Function
 
 ```bash
-curl -s -X POST $BASE_URL/execute \
+curl -s -X POST https://python-executor-498097721438.us-central1.run.app/execute \
   -H "Content-Type: application/json" \
   -d '{
     "script": "def other_function():\n    return {\"value\": 42}"
@@ -252,7 +246,7 @@ Expected Response:
 ### Test Case 9: Syntax Error
 
 ```bash
-curl -s -X POST $BASE_URL/execute \
+curl -s -X POST https://python-executor-498097721438.us-central1.run.app/execute \
   -H "Content-Type: application/json" \
   -d '{
     "script": "def main():\n    return {invalid syntax here}"
@@ -270,7 +264,7 @@ Expected Response:
 ### Test Case 10: Non-Serializable Return
 
 ```bash
-curl -s -X POST $BASE_URL/execute \
+curl -s -X POST https://python-executor-498097721438.us-central1.run.app/execute \
   -H "Content-Type: application/json" \
   -d '{
     "script": "class MyClass:\n    pass\n\ndef main():\n    return MyClass()"
