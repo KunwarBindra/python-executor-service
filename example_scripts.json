@@ -1,0 +1,15 @@
+{
+  "simple_example": {
+    "script": "def main():\n    return {'message': 'Hello, World!', 'status': 'success'}"
+  },
+  "with_stdout": {
+    "script": "def main():\n    print('Processing data...')\n    print('Step 1 complete')\n    return {'result': 'done', 'steps': 2}"
+  },
+  "pandas_numpy": {
+    "script": "import pandas as pd\nimport numpy as np\n\ndef main():\n    print('Creating dataframe...')\n    data = pd.DataFrame({\n        'numbers': [1, 2, 3, 4, 5],\n        'squared': [1, 4, 9, 16, 25]\n    })\n    print(f'Dataframe has {len(data)} rows')\n    \n    mean_val = float(data['numbers'].mean())\n    sum_val = int(np.sum(data['squared']))\n    \n    return {\n        'mean': mean_val,\n        'sum_of_squares': sum_val,\n        'array_stats': {\n            'min': int(data['numbers'].min()),\n            'max': int(data['numbers'].max())\n        }\n    }"
+  },
+  "os_module": {
+    "script": "import os\n\ndef main():\n    # This demonstrates that os module is available\n    env_vars = len(os.environ)\n    return {\n        'environment_variables_count': env_vars,\n        'path_separator': os.sep\n    }"
+  }
+}
+
